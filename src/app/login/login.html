@@ -1,0 +1,10 @@
+<div class="flex flex-col items-center justify-center h-screen">
+    <h1 class="text-3xl mb-4">Dummy Login</h1>
+
+    <input class="p-2 rounded text-black" [value]="username()" (input)="username.set($event.target.value)"
+        placeholder="Enter your name" />
+
+    <button class="mt-4 bg-blue-500 px-4 py-2 rounded" (click)="login()">
+        Login
+    </button>
+</div>
