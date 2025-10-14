@@ -1,0 +1,5 @@
+.annotation-label {
+    pointer-events: none;
+    user-select: none;
+    white-space: nowrap;
+}

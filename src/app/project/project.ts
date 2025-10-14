@@ -3,8 +3,14 @@ import * as THREE from 'three';
 import { io, Socket } from 'socket.io-client';
 import { ActivatedRoute } from '@angular/router';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { throttleTime, Subject } from 'rxjs';
+
+interface Annotation {
+    id: string;
+    position: THREE.Vector3;
+    text: string;
+}
 
 @Component({
     selector: 'app-project',
@@ -17,15 +23,17 @@ export class Project implements AfterViewInit, OnDestroy {
     private scene!: THREE.Scene;
     private camera!: THREE.PerspectiveCamera;
     private renderer!: THREE.WebGLRenderer;
+    private labelRenderer!: CSS2DRenderer;
     private cube!: THREE.Mesh;
     private controls!: OrbitControls;
-    private transformControls!: TransformControls;
     private animationFrameId!: number;
+    private raycaster = new THREE.Raycaster();
+    private mouse = new THREE.Vector2();
+    private annotations: Annotation[] = [];
 
     socket: Socket = io('http://localhost:4000');
     projectId!: string;
 
-    // For throttle camera sync
     private cameraSubject = new Subject<any>();
 
     constructor(private route: ActivatedRoute) {}
@@ -43,6 +51,7 @@ export class Project implements AfterViewInit, OnDestroy {
         cancelAnimationFrame(this.animationFrameId);
         this.socket.disconnect();
         window.removeEventListener('keydown', this.handleKey);
+        window.removeEventListener('click', this.handleSceneClick);
     }
 
     private initScene() {
@@ -61,6 +70,14 @@ export class Project implements AfterViewInit, OnDestroy {
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.rendererContainer.nativeElement.appendChild(this.renderer.domElement);
 
+        // === Label Renderer ===
+        this.labelRenderer = new CSS2DRenderer();
+        this.labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        this.labelRenderer.domElement.style.position = 'absolute';
+        this.labelRenderer.domElement.style.top = '0';
+        this.labelRenderer.domElement.style.pointerEvents = 'none';
+        this.rendererContainer.nativeElement.appendChild(this.labelRenderer.domElement);
+
         const light = new THREE.PointLight(0xffffff, 1);
         light.position.set(5, 5, 5);
         this.scene.add(light);
@@ -76,21 +93,10 @@ export class Project implements AfterViewInit, OnDestroy {
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.05;
 
-        // TransformControls
-        this.transformControls = new TransformControls(this.camera, this.renderer.domElement);
-        this.transformControls.attach(this.cube);
-        (this.scene as any).add(this.transformControls);
-
-        this.transformControls.addEventListener('dragging-changed', (event: any) => {
-            this.controls.enabled = !event.value;
-        });
-
-        this.transformControls.addEventListener('objectChange', () => this.sendCubeUpdate());
-
-        window.addEventListener('keydown', this.handleKey);
         window.addEventListener('resize', () => this.onResize());
+        window.addEventListener('click', this.handleSceneClick);
 
-        // OrbitControls mouse listener
+        // Camera Sync
         this.controls.addEventListener('change', () => {
             this.cameraSubject.next({
                 projectId: this.projectId,
@@ -106,27 +112,77 @@ export class Project implements AfterViewInit, OnDestroy {
         this.animationFrameId = requestAnimationFrame(this.animate);
         this.controls.update();
         this.renderer.render(this.scene, this.camera);
+        this.labelRenderer.render(this.scene, this.camera);
     };
 
     private onResize() {
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.labelRenderer.setSize(window.innerWidth, window.innerHeight);
     }
 
     private handleKey = (event: KeyboardEvent) => {
-        switch (event.key.toLowerCase()) {
-            case 'g':
-                this.transformControls.setMode('translate');
-                break;
-            case 'r':
-                this.transformControls.setMode('rotate');
-                break;
-            case 's':
-                this.transformControls.setMode('scale');
-                break;
+
+    };
+
+    // === Annotaions add ===
+    private handleSceneClick = (event: MouseEvent) => {
+        // Annotation can be added only when shit key is pressed
+        if (!event.shiftKey) return;
+
+        const rect = this.renderer.domElement.getBoundingClientRect();
+        this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+        const intersects = this.raycaster.intersectObjects([this.cube]);
+
+        if (intersects.length > 0) {
+            const point = intersects[0].point;
+            const text = prompt('Введите аннотацию:');
+            if (!text) return;
+
+            const annotation: Annotation = {
+                id: crypto.randomUUID(),
+                position: point.clone(),
+                text,
+            };
+
+            this.addAnnotation(annotation);
+            this.socket.emit('addAnnotation', {
+                projectId: this.projectId,
+                annotation: {
+                    ...annotation,
+                    position: { x: point.x, y: point.y, z: point.z },
+                },
+            });
         }
     };
+
+    private addAnnotation(annotation: Annotation) {
+        const sphere = new THREE.Mesh(
+            new THREE.SphereGeometry(0.05),
+            new THREE.MeshBasicMaterial({ color: 0xff0000 })
+        );
+        sphere.position.copy(annotation.position);
+        this.scene.add(sphere);
+
+        const div = document.createElement('div');
+        div.className = 'annotation-label';
+        div.textContent = annotation.text;
+        div.style.color = 'white';
+        div.style.background = 'rgba(0, 0, 0, 0.6)';
+        div.style.padding = '2px 6px';
+        div.style.borderRadius = '4px';
+        div.style.fontSize = '12px';
+
+        const label = new CSS2DObject(div);
+        label.position.copy(annotation.position.clone().add(new THREE.Vector3(0, 0.15, 0)));
+        this.scene.add(label);
+
+        this.annotations.push(annotation);
+    }
 
     // === Socket.io ===
     private initSockets() {
@@ -145,6 +201,30 @@ export class Project implements AfterViewInit, OnDestroy {
             this.camera.position.copy(data.position);
             this.camera.rotation.copy(data.rotation);
         });
+
+        // Annotations
+        this.socket.on('annotationAdded', (data) => {
+            if (data.projectId !== this.projectId) return;
+            const { annotation } = data;
+            const pos = new THREE.Vector3(
+                annotation.position.x,
+                annotation.position.y,
+                annotation.position.z
+            );
+            this.addAnnotation({ ...annotation, position: pos });
+        });
+
+        this.socket.on('loadAnnotations', (data) => {
+            if (data.projectId !== this.projectId) return;
+            data.annotations.forEach((annotation: any) => {
+                const pos = new THREE.Vector3(
+                    annotation.position.x,
+                    annotation.position.y,
+                    annotation.position.z
+                );
+                this.addAnnotation({ ...annotation, position: pos });
+            });
+        });
     }
 
     private sendCubeUpdate() {
@@ -161,7 +241,6 @@ export class Project implements AfterViewInit, OnDestroy {
     }
 
     private initCameraSync() {
-        // throttle 100ms for camera
         this.cameraSubject.pipe(throttleTime(100)).subscribe((data) => {
             this.socket.emit('updateCamera', {
                 ...data,
