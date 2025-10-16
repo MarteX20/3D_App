@@ -17,7 +17,7 @@ export class Login {
     login() {
         const name = this.username().trim();
         if (name) {
-            localStorage.setItem('username', name);
+            localStorage.setItem('userName', name);
             this.router.navigate(['/projects']);
         }
     }

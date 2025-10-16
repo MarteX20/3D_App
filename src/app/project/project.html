@@ -1,1 +1,51 @@
-<div #rendererContainer class="w-full h-screen relative"></div>
+<div class="relative w-full h-screen bg-[#1e1e1e] text-white overflow-hidden">
+    <!-- Верхняя панель -->
+    <div
+        class="absolute top-0 left-0 w-full flex items-center justify-between px-4 py-2 bg-black/60 border-b border-gray-700 z-20">
+        <button class="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition" (click)="goBack()">
+            <span class="text-lg">←</span>
+            Back to Projects
+        </button>
+
+        <div class="text-sm text-gray-400">
+            Project ID: <span class="text-blue-400">{{ projectId }}</span>
+        </div>
+
+        <button (click)="toggleChat()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">
+            💬 Chat
+        </button>
+    </div>
+
+    <!-- 3D сцена -->
+    <div #rendererContainer class="w-full h-full"></div>
+
+    <!-- Панель чата -->
+    <div class="absolute top-0 right-0 h-full w-[350px] bg-black/80 border-l border-gray-700 p-4 flex flex-col transform transition-transform duration-300 z-30"
+        [class.translate-x-0]="isChatOpen" [class.translate-x-full]="!isChatOpen">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-semibold text-blue-400">Chat</h2>
+            <button (click)="toggleChat()" class="text-gray-400 hover:text-white transition">✕</button>
+        </div>
+
+        <!-- Сообщения -->
+        <div #chatContainer class="flex-1 overflow-y-auto mb-3 pr-2 space-y-1 scroll-smooth">
+            @for (msg of messages(); track $index) {
+            <div>
+                <span class="text-blue-400 font-semibold">{{ msg.user }}</span>:
+                <span>{{ msg.text }}</span>
+                <span class="text-gray-500 text-xs ml-2">{{ msg.time }}</span>
+            </div>
+            }
+        </div>
+
+        <!-- Поле ввода -->
+        <div class="flex gap-2 items-center">
+            <input type="text" [formControl]="newMessage" (keydown.enter)="sendMessage()"
+                placeholder="Type a message..."
+                class="flex-1 p-2 rounded bg-gray-800 text-white outline-none border border-gray-600 focus:border-blue-500 transition" />
+            <button (click)="sendMessage()" class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded transition">
+                Send
+            </button>
+        </div>
+    </div>
+</div>
