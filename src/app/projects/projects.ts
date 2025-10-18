@@ -2,11 +2,12 @@ import { Component, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'app-projects',
     standalone: true,
-    imports: [CommonModule, HttpClientModule],
+    imports: [CommonModule, HttpClientModule, FormsModule],
     templateUrl: './projects.html',
 })
 export class Projects implements OnInit {
@@ -24,12 +25,17 @@ export class Projects implements OnInit {
     createProject() {
         const title = this.title().trim();
         if (!title) return;
+
         this.http
             .post<any>('http://localhost:4000/projects', { title })
             .subscribe((p) => this.projects.update((arr) => [...arr, p]));
     }
 
-    openProject(id: number) {
+    openProject(id: string) {
         this.router.navigate(['/project', id]);
+    }
+
+    toLogin(){
+        this.router.navigate(['/login']);
     }
 }

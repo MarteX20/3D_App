@@ -1,8 +1,8 @@
 <div class="relative w-full h-screen bg-[#1e1e1e] text-white overflow-hidden">
-    <!-- Верхняя панель -->
+    <!-- Upper panel -->
     <div
         class="absolute top-0 left-0 w-full flex items-center justify-between px-4 py-2 bg-black/60 border-b border-gray-700 z-20">
-        <button class="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition" (click)="goBack()">
+        <button class="flex items-center gap-1 text-sm text-gray-300 hover:text-white transition" (click)="goBack()">
             <span class="text-lg">←</span>
             Back to Projects
         </button>
@@ -16,10 +16,10 @@
         </button>
     </div>
 
-    <!-- 3D сцена -->
+    <!-- 3D scene -->
     <div #rendererContainer class="w-full h-full"></div>
 
-    <!-- Панель чата -->
+    <!-- Chat panel -->
     <div class="absolute top-0 right-0 h-full w-[350px] bg-black/80 border-l border-gray-700 p-4 flex flex-col transform transition-transform duration-300 z-30"
         [class.translate-x-0]="isChatOpen" [class.translate-x-full]="!isChatOpen">
         <div class="flex items-center justify-between mb-3">
@@ -27,7 +27,7 @@
             <button (click)="toggleChat()" class="text-gray-400 hover:text-white transition">✕</button>
         </div>
 
-        <!-- Сообщения -->
+        <!-- Messages -->
         <div #chatContainer class="flex-1 overflow-y-auto mb-3 pr-2 space-y-1 scroll-smooth">
             @for (msg of messages(); track $index) {
             <div>
@@ -38,7 +38,7 @@
             }
         </div>
 
-        <!-- Поле ввода -->
+        <!-- Input field -->
         <div class="flex gap-2 items-center">
             <input type="text" [formControl]="newMessage" (keydown.enter)="sendMessage()"
                 placeholder="Type a message..."
@@ -47,5 +47,24 @@
                 Send
             </button>
         </div>
+
+
+    </div>
+
+    <!-- Bottom panel: Cube color selector -->
+    <div
+        class="absolute bottom-0 left-0 w-full flex items-center justify-center px-4 py-2 bg-black/60 border-t border-gray-700 z-20">
+        <label for="cubeColor" class="text-sm text-gray-300 mr-2">Cube Color:</label>
+        <select class="bg-gray-800 text-white p-2 rounded border border-gray-600 focus:border-blue-500 transition"
+            (change)="changeCubeColor($any($event.target).value)">
+            <option value="#00aaff" selected>Blue</option>
+            <option value="#ff0000">Red</option>
+            <option value="#00ff00">Green</option>
+            <option value="#ffff00">Yellow</option>
+            <option value="#ff00ff">Magenta</option>
+            <option value="#ffffff">White</option>
+            <option value="#000000">Black</option>
+        </select>
+
     </div>
 </div>
