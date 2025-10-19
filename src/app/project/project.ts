@@ -161,12 +161,13 @@ export class Project implements AfterViewInit, OnDestroy {
     sendMessage() {
         const text = this.newMessage.value?.trim();
         if (!text) return;
+
         const message = { user: this.userName, text, time: new Date().toLocaleTimeString() };
-        this.messages.update((prev) => [...prev, message]);
-        this.scrollToBottom();
+
+        // 👉 Убираем локальное добавление:
+        // this.messages.update((prev) => [...prev, message]);
 
         this.socket.emit('sendMessage', { projectId: this.projectId, message });
-
         this.newMessage.reset();
     }
 
