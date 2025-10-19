@@ -2,58 +2,118 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.5.
 
-## Development server
+# 🧱 Real-Time 3D Collaboration App
 
-To start a local development server, run:
+This project is a **real-time collaborative 3D scene editor** built with **Angular**, **Three.js**, **Node.js**, **Express**, **Socket.IO**, and **MongoDB Atlas**.
 
-```bash
-ng serve
-```
+Users can:
+- Create and view shared projects
+- Chat in real time
+- Add and remove 3D annotations
+- Synchronize camera movement with all connected users
+- Change cube color dynamically
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+---
 
-## Code scaffolding
+## 🚀 Features
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+✅ Real-time chat with Socket.IO  
+✅ Live annotation synchronization (add & delete)  
+✅ Smooth real-time camera sync  
+✅ Shared project list across all users  
+✅ MongoDB Atlas cloud database  
+✅ Responsive UI built with TailwindCSS  
+✅ 3D scene powered by Three.js  
 
-```bash
-ng generate component component-name
-```
+---
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## 🧩 Tech Stack
 
-```bash
-ng generate --help
-```
+| Category   | Technology |
+|-------------|-------------|
+| **Frontend** | [Angular 20](https://angular.dev/), [TailwindCSS](https://tailwindcss.com/), [Three.js](https://threejs.org/) |
+| **Backend**  | [Node.js](https://nodejs.org/), [Express.js](https://expressjs.com/) |
+| **Real-Time** | [Socket.IO](https://socket.io/) |
+| **Database** | [MongoDB Atlas](https://www.mongodb.com/atlas/database) |
 
-## Building
 
-To build the project run:
+---
 
-```bash
-ng build
-```
+## 🛠️ Installation Guide
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+### Clone this repository (frontend)
+### For backend clone this [repository](https://github.com/MarteX20/server-backend-)
 
-## Running unit tests
+### In both cloned repositories run npm install to install all dependencies 
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+### Create a .env file inside /server (backend repository) and add:
+**PORT=3000
+MONGO_URI=mongodb+srv://'username':'password'@'cluster'.mongodb.net/?retryWrites=true&w=majority&appName='your-app-name'**
 
-```bash
-ng test
-```
+🌍 MongoDB Atlas Setup
 
-## Running end-to-end tests
+1) Visit [MongoDB Atlas](https://www.mongodb.com/products/platform/atlas-database)
+2) Create a free cluster.
+3) In Database & Network Access, add a new user with a password.
+4) In Database & Network Access, allow access from your IP (0.0.0.0/0 for all).
+5) Copy your credentials and paste it into .env as MONGO_URI.
 
-For end-to-end (e2e) testing, run:
+**!!!** ⚠️ Replace 'username', 'password', 'cluster', and 'your-app-name' with your MongoDB Atlas credentials.
 
-```bash
-ng e2e
-```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
 
-## Additional Resources
+
+
+### Start the backend server:
+npm start
+
+### Start the Angular dev server:
+npm start (or 'ng s -o' and wait it will open atomatically in your browser). By default, it runs at: http://localhost:4200
+
+⚡ Real-Time Synchronization
+
+This project uses Socket.IO for live updates:
+| Feature     | Description                                          |
+| ----------- | ---------------------------------------------------- |
+| Chat        | All messages appear instantly for all users          |
+| Annotations | Adding/removing annotations is synced in real time   |
+| Camera      | Camera rotation/movement is broadcast to all clients |
+| Projects    | Project list is shared among all users               |
+
+
+### 🧪 Testing the App
+Open two browser tabs (or two different browsers on your PC).
+Open the same project in both.
+
+Try:
+
+**---> Moving the camera <br>**
+**---> Sending a chat message <br>**
+**---> Adding or deleting annotations <br>**
+**---> Changing cube color (currently only on your PC) <br>**
+**---> You should see everything update instantly in both clients. <br>**
+
+Load personal 3D files will be added soon, stay tuned
+
+## 🖼️ Screenshots
+
+### 🏠 Project List
+![Project List](./screenshots/Projects.png)
+
+### 🧱 3D Scene View
+![3D Scene](./screenshots/Cube&annotation.png)
+
+### 💬 Real-time Chat
+![Chat Panel](./screenshots/Chat.png)
+
+### Login
+![Login](./screenshots/Login.png)
+
+
+🧑‍💻 **Author**
+
+**Artem A.** <br>
+Frontend Developer | Web Enthusiast | Star Wars Fan 🚀🪐🌕🌑☄️🛸
+<br> <br>
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
