@@ -1,5 +1,4 @@
-<div class="relative w-full min-h-screen bg-[#1e1e1e] text-white flex flex-col overflow-y-auto">
-    <!-- Upper bar -->
+<div class="relative w-full min-h-screen bg-[#1e1e1e] text-white flex flex-col overflow-y-auto overflow-x-hidden">
     <div
         class="sticky top-0 left-0 w-full flex items-center justify-between px-4 py-2 bg-black/60 border-b border-gray-700 z-20 backdrop-blur-md">
         <button class="flex items-center gap-1 text-sm text-gray-300 hover:text-white transition" (click)="goBack()">
@@ -17,36 +16,50 @@
         </button>
     </div>
 
-    <!-- 3D canvas -->
+    <!-- 3D scene -->
     <div #rendererContainer
         class="relative w-full h-[75vh] sm:h-[80vh] md:h-[85vh] touch-auto overflow-hidden bg-[#1e1e1e]">
     </div>
 
-    <!-- Mobile scroll indicator -->
-    <div class="block md:hidden w-full text-center text-gray-400 text-sm animate-bounce mt-3 select-none">
-        ↓ Scroll down to change color ↓
+    <!-- Scroll zone (mobile only) -->
+    <div class="fixed left-0 top-1/2 -translate-y-1/2 w-6 h-1/2 bg-gradient-to-b from-black/30 to-black/10 border-r border-gray-700 hover:from-black/40 hover:to-black/20 md:hidden z-30 rounded-r-lg transition-all select-none flex flex-col items-center justify-between py-2"
+        (touchstart)="handleTouchStart($event)" (touchend)="handleTouchEnd($event)">
+        <!-- Up arrow -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-300 opacity-70" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+        </svg>
+
+        <!-- Down arrow -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-300 opacity-70" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
     </div>
 
-    <!-- Change color panel -->
-    <div
-        class="mt-4 mb-8 w-full flex flex-col items-center gap-3 bg-black/60 border-t border-gray-700 p-4 rounded-t-xl">
-        <h3 class="text-sm sm:text-base text-gray-300">🎨 Change Cube Color</h3>
-        <select (change)="changeCubeColor($any($event.target).value)"
-            class="bg-gray-800 text-white p-2 rounded border border-gray-600 focus:border-blue-500 transition w-48 sm:w-60">
-            <option value="#00aaff" selected>Blue</option>
-            <option value="#ff0000">Red</option>
-            <option value="#00ff00">Green</option>
-            <option value="#ffff00">Yellow</option>
-            <option value="#ff00ff">Magenta</option>
-            <option value="#ffffff">White</option>
-            <option value="#000000">Black</option>
-        </select>
+
+    <div class="flex flex-col items-center gap-3 mt-6">
+        <!-- Color selector -->
+        <div class="mt-4 w-full flex flex-col items-center gap-3 bg-black/60 border-t border-gray-700 p-4 rounded-t-xl">
+            <h3 class="text-sm sm:text-base text-gray-300">🎨 Change Cube Color</h3>
+            <select (change)="changeCubeColor($any($event.target).value)"
+                class="bg-gray-800 text-white p-2 rounded border border-gray-600 focus:border-blue-500 transition w-48 sm:w-60">
+                <option value="#00aaff" selected>Blue</option>
+                <option value="#ff0000">Red</option>
+                <option value="#00ff00">Green</option>
+                <option value="#ffff00">Yellow</option>
+                <option value="#ff00ff">Magenta</option>
+                <option value="#ffffff">White</option>
+                <option value="#000000">Black</option>
+            </select>
+        </div>
     </div>
 
-    <!-- Chat panel -->
-    <div class="absolute top-0 right-0 h-full w-[350px] max-w-full bg-black/80 border-l border-gray-700 p-4 flex flex-col transform transition-transform duration-300 z-30"
-        [class.translate-x-0]="isChatOpen" [class.translate-x-full]="!isChatOpen">
-
+    <!-- Chat  -->
+    <div class="fixed top-0 right-0 h-screen w-full sm:w-[350px] bg-black/80 border-l border-gray-700 p-4 flex flex-col transform transition-[transform,opacity] duration-300 z-30 will-change-transform"
+        [class.translate-x-0]="isChatOpen" [class.opacity-100]="isChatOpen" [class.pointer-events-auto]="isChatOpen"
+        [class.translate-x-full]="!isChatOpen" [class.opacity-0]="!isChatOpen"
+        [class.pointer-events-none]="!isChatOpen">
         <div class="flex items-center justify-between mb-3">
             <h2 class="text-lg font-semibold text-blue-400">Chat</h2>
             <button (click)="toggleChat()" class="text-gray-400 hover:text-white transition">✕</button>
@@ -63,7 +76,7 @@
             }
         </div>
 
-        <!-- Input field -->
+        <!-- Input -->
         <div class="flex gap-2 items-center">
             <input type="text" [formControl]="newMessage" (keydown.enter)="sendMessage()"
                 placeholder="Type a message..."

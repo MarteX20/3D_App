@@ -39,6 +39,7 @@ export class Project implements AfterViewInit, OnDestroy {
     private mouse = new THREE.Vector2();
     private annotations: Annotation[] = [];
     private subscriptions: Subscription[] = [];
+    private touchStartY = 0;
 
     // === Network & chat ===
 
@@ -164,7 +165,6 @@ export class Project implements AfterViewInit, OnDestroy {
 
         const message = { user: this.userName, text, time: new Date().toLocaleTimeString() };
 
-        // 👉 Убираем локальное добавление:
         // this.messages.update((prev) => [...prev, message]);
 
         this.socket.emit('sendMessage', { projectId: this.projectId, message });
@@ -392,5 +392,25 @@ export class Project implements AfterViewInit, OnDestroy {
 
     goBack() {
         this.router.navigate(['/projects']);
+    }
+
+    // === SCROLL ===
+    handleTouchStart(event: TouchEvent) {
+        this.touchStartY = event.touches[0].clientY;
+    }
+
+    handleTouchEnd(event: TouchEvent) {
+        const touchEndY = event.changedTouches[0].clientY;
+        const delta = this.touchStartY - touchEndY;
+
+        // свайп вверх → scroll down
+        if (delta > 50) {
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        }
+
+        // свайп вниз → scroll up
+        else if (delta < -50) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
     }
 }
