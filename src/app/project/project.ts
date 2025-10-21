@@ -42,7 +42,7 @@ export class Project implements AfterViewInit, OnDestroy {
 
     // === Network & chat ===
 
-    socket: Socket = io('http://localhost:4000');
+    socket: Socket = io('https://server-backend-brl7.onrender.com');
     projectId!: string;
     userName = localStorage.getItem('userName') || 'User-' + Math.floor(Math.random() * 1000);
     messages = signal<{ user: string; text: string; time: string }[]>([]);
