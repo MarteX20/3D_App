@@ -31,11 +31,30 @@ export class Projects implements OnInit {
             .subscribe((p) => this.projects.update((arr) => [...arr, p]));
     }
 
+    deleteProject(id: string) {
+        if (!confirm('Are you sure you want to delete this project?')) return;
+
+        fetch(`https://server-backend-brl7.onrender.com/projects/${id}`, {
+            method: 'DELETE',
+        })
+            .then((res) => res.json())
+            .then((data) => {
+                if (data.success) {
+                    // Удаляем проект локально без перезагрузки
+                    this.projects.update((prev) => prev.filter((p) => p._id !== id));
+                    alert('✅ Project deleted successfully');
+                } else {
+                    alert('❌ Error deleting project');
+                }
+            })
+            .catch(() => alert('❌ Server connection error'));
+    }
+
     openProject(id: string) {
         this.router.navigate(['/project', id]);
     }
 
-    toLogin(){
+    toLogin() {
         this.router.navigate(['/login']);
     }
 }
