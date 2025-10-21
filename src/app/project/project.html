@@ -1,27 +1,52 @@
-<div class="relative w-full h-screen bg-[#1e1e1e] text-white overflow-hidden">
-    <!-- Upper panel -->
+<div class="relative w-full min-h-screen bg-[#1e1e1e] text-white flex flex-col overflow-y-auto">
+    <!-- Upper bar -->
     <div
-        class="absolute top-0 left-0 w-full flex items-center justify-between px-4 py-2 bg-black/60 border-b border-gray-700 z-20">
+        class="sticky top-0 left-0 w-full flex items-center justify-between px-4 py-2 bg-black/60 border-b border-gray-700 z-20 backdrop-blur-md">
         <button class="flex items-center gap-1 text-sm text-gray-300 hover:text-white transition" (click)="goBack()">
             <span class="text-lg">←</span>
             Back to Projects
         </button>
 
-        <div class="text-sm text-gray-400">
+        <div class="text-xs sm:text-sm text-gray-400 truncate">
             Project ID: <span class="text-blue-400">{{ projectId }}</span>
         </div>
 
-        <button (click)="toggleChat()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">
+        <button (click)="toggleChat()"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs sm:text-sm transition">
             💬 Chat
         </button>
     </div>
 
-    <!-- 3D scene -->
-    <div #rendererContainer class="w-full h-full"></div>
+    <!-- 3D canvas -->
+    <div #rendererContainer
+        class="relative w-full h-[75vh] sm:h-[80vh] md:h-[85vh] touch-auto overflow-hidden bg-[#1e1e1e]">
+    </div>
+
+    <!-- Mobile scroll indicator -->
+    <div class="block md:hidden w-full text-center text-gray-400 text-sm animate-bounce mt-3 select-none">
+        ↓ Scroll down to change color ↓
+    </div>
+
+    <!-- Change color panel -->
+    <div
+        class="mt-4 mb-8 w-full flex flex-col items-center gap-3 bg-black/60 border-t border-gray-700 p-4 rounded-t-xl">
+        <h3 class="text-sm sm:text-base text-gray-300">🎨 Change Cube Color</h3>
+        <select (change)="changeCubeColor($any($event.target).value)"
+            class="bg-gray-800 text-white p-2 rounded border border-gray-600 focus:border-blue-500 transition w-48 sm:w-60">
+            <option value="#00aaff" selected>Blue</option>
+            <option value="#ff0000">Red</option>
+            <option value="#00ff00">Green</option>
+            <option value="#ffff00">Yellow</option>
+            <option value="#ff00ff">Magenta</option>
+            <option value="#ffffff">White</option>
+            <option value="#000000">Black</option>
+        </select>
+    </div>
 
     <!-- Chat panel -->
-    <div class="absolute top-0 right-0 h-full w-[350px] bg-black/80 border-l border-gray-700 p-4 flex flex-col transform transition-transform duration-300 z-30"
+    <div class="absolute top-0 right-0 h-full w-[350px] max-w-full bg-black/80 border-l border-gray-700 p-4 flex flex-col transform transition-transform duration-300 z-30"
         [class.translate-x-0]="isChatOpen" [class.translate-x-full]="!isChatOpen">
+
         <div class="flex items-center justify-between mb-3">
             <h2 class="text-lg font-semibold text-blue-400">Chat</h2>
             <button (click)="toggleChat()" class="text-gray-400 hover:text-white transition">✕</button>
@@ -47,24 +72,5 @@
                 Send
             </button>
         </div>
-
-
-    </div>
-
-    <!-- Bottom panel: Cube color selector -->
-    <div
-        class="absolute bottom-0 left-0 w-full flex items-center justify-center px-4 py-2 bg-black/60 border-t border-gray-700 z-20">
-        <label for="cubeColor" class="text-sm text-gray-300 mr-2">Cube Color:</label>
-        <select class="bg-gray-800 text-white p-2 rounded border border-gray-600 focus:border-blue-500 transition"
-            (change)="changeCubeColor($any($event.target).value)">
-            <option value="#00aaff" selected>Blue</option>
-            <option value="#ff0000">Red</option>
-            <option value="#00ff00">Green</option>
-            <option value="#ffff00">Yellow</option>
-            <option value="#ff00ff">Magenta</option>
-            <option value="#ffffff">White</option>
-            <option value="#000000">Black</option>
-        </select>
-
     </div>
 </div>
