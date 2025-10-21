@@ -18,7 +18,7 @@ export class Projects implements OnInit {
 
     ngOnInit() {
         this.http
-            .get<any[]>('http://localhost:4000/projects')
+            .get<any[]>('https://server-backend-brl7.onrender.com/projects')
             .subscribe((p) => this.projects.set(p));
     }
 
@@ -27,7 +27,7 @@ export class Projects implements OnInit {
         if (!title) return;
 
         this.http
-            .post<any>('http://localhost:4000/projects', { title })
+            .post<any>('https://server-backend-brl7.onrender.com/projects', { title })
             .subscribe((p) => this.projects.update((arr) => [...arr, p]));
     }
 
