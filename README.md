@@ -2,6 +2,9 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.5.
 
+## 🚀 Live Demo
+🔗 [Try the App]([https://collab3d.vercel.app](https://3d-app-delta.vercel.app/login)
+
 # 🧱 Real-Time 3D Collaboration App
 
 This project is a **real-time collaborative 3D scene editor** built with **Angular**, **Three.js**, **Node.js**, **Express**, **Socket.IO**, and **MongoDB Atlas**.
