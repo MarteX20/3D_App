@@ -207,6 +207,11 @@ export class Project implements AfterViewInit, OnDestroy {
                 this.cube.position.set(o.position.x, o.position.y, o.position.z);
                 this.cube.rotation.set(o.rotation.x, o.rotation.y, o.rotation.z);
                 this.cube.scale.set(o.scale.x, o.scale.y, o.scale.z);
+
+                // Color
+                if (o.color) {
+                    (this.cube.material as THREE.MeshStandardMaterial).color.set(o.color);
+                }
             }
 
             // Annotations
@@ -260,6 +265,15 @@ export class Project implements AfterViewInit, OnDestroy {
             this.camera.rotation.x += (targetRot.x - this.camera.rotation.x) * 0.1;
             this.camera.rotation.y += (targetRot.y - this.camera.rotation.y) * 0.1;
             this.camera.rotation.z += (targetRot.z - this.camera.rotation.z) * 0.1;
+        });
+
+        // Cube color
+        this.socket.on('cubeColorUpdated', (data) => {
+            if (data.projectId !== this.projectId) return;
+
+            if (this.cube) {
+                (this.cube.material as THREE.MeshStandardMaterial).color.set(data.color);
+            }
         });
 
         // Annotations
@@ -387,6 +401,11 @@ export class Project implements AfterViewInit, OnDestroy {
     changeCubeColor(color: string) {
         if (this.cube) {
             (this.cube.material as THREE.MeshStandardMaterial).color.set(color);
+
+            this.socket.emit('updateCubeColor', {
+                projectId: this.projectId,
+                color,
+            });
         }
     }
 
@@ -403,12 +422,12 @@ export class Project implements AfterViewInit, OnDestroy {
         const touchEndY = event.changedTouches[0].clientY;
         const delta = this.touchStartY - touchEndY;
 
-        // свайп вверх → scroll down
+        // scroll down
         if (delta > 50) {
             window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
         }
 
-        // свайп вниз → scroll up
+        // scroll up
         else if (delta < -50) {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
