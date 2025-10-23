@@ -6,9 +6,11 @@
             Back to Projects
         </button>
 
-        <div class="text-xs sm:text-sm text-gray-400 truncate">
-            Project ID: <span class="text-blue-400">{{ projectId }}</span>
-        </div>
+        <label class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm cursor-pointer">
+            📁 Upload Model
+            <input type="file" (change)="uploadModel($event)" accept=".stl,.step,.stp" hidden />
+        </label>
+
 
         <button (click)="toggleChat()"
             class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs sm:text-sm transition">
@@ -39,10 +41,15 @@
 
 
     <div class="flex flex-col items-center gap-3 mt-6">
+        <!-- Project ID -->
+        <div class="text-xs sm:text-sm text-gray-400 truncate">
+            Project ID: <span class="text-blue-400">{{ projectId }}</span>
+        </div>
+
         <!-- Color selector -->
         <div class="mt-4 w-full flex flex-col items-center gap-3 bg-black/60 border-t border-gray-700 p-4 rounded-t-xl">
             <h3 class="text-sm sm:text-base text-gray-300">🎨 Change Cube Color</h3>
-            <select (change)="changeCubeColor($any($event.target).value)"
+            <select (change)="changeObjectColor($any($event.target).value)"
                 class="bg-gray-800 text-white p-2 rounded border border-gray-600 focus:border-blue-500 transition w-48 sm:w-60">
                 <option value="#00aaff" selected>Blue</option>
                 <option value="#ff0000">Red</option>

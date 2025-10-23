@@ -7,6 +7,7 @@ import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRe
 import { throttleTime, Subject, Subscription } from 'rxjs';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 
 interface Annotation {
     id: string;
@@ -31,7 +32,7 @@ export class Project implements AfterViewInit, OnDestroy {
     private camera!: THREE.PerspectiveCamera;
     private renderer!: THREE.WebGLRenderer;
     private labelRenderer!: CSS2DRenderer;
-    private cube!: THREE.Mesh;
+    private mainObject: THREE.Mesh | null = null;
     private controls!: OrbitControls;
     private directionalLight!: THREE.DirectionalLight;
     private animationFrameId!: number;
@@ -110,10 +111,10 @@ export class Project implements AfterViewInit, OnDestroy {
 
         const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
         const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0x00aaff, roughness: 0.15 });
-        this.cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-        this.cube.position.set(0, 0.5, 0);
-        this.cube.castShadow = true;
-        this.scene.add(this.cube);
+        this.mainObject = new THREE.Mesh(cubeGeometry, cubeMaterial);
+        this.mainObject.position.set(0, 0.5, 0);
+        this.mainObject.castShadow = true;
+        this.scene.add(this.mainObject);
 
         // Floor
         const floor = new THREE.Mesh(
@@ -180,6 +181,136 @@ export class Project implements AfterViewInit, OnDestroy {
         });
     }
 
+    // !Upload
+    // === Helpers: fit & frame ===
+    private fitAndCenterMesh(mesh: THREE.Mesh, targetSize = 1.5) {
+        mesh.geometry.computeBoundingBox();
+        const box = mesh.geometry.boundingBox!;
+        const size = new THREE.Vector3();
+        box.getSize(size);
+
+        // 1) Centrer
+        mesh.geometry.center();
+
+        // 2) Scale to fit
+        const maxAxis = Math.max(size.x, size.y, size.z) || 1;
+        const scale = targetSize / maxAxis;
+        mesh.scale.setScalar(scale);
+
+        // 3) Putting the object on the ground
+        const newBox = new THREE.Box3().setFromObject(mesh);
+        const newSize = new THREE.Vector3();
+        const newCenter = new THREE.Vector3();
+        newBox.getSize(newSize);
+        newBox.getCenter(newCenter);
+
+        mesh.position.set(0, newSize.y / 2, 0);
+    }
+
+    private frameCameraOnObject(object: THREE.Object3D) {
+        const box = new THREE.Box3().setFromObject(object);
+        const size = new THREE.Vector3();
+        const center = new THREE.Vector3();
+        box.getSize(size);
+        box.getCenter(center);
+
+        // Focus OrbitControls
+        this.controls.target.copy(center);
+
+        // Focus Camera
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const fov = this.camera.fov * (Math.PI / 180);
+        let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
+
+        // Zoom
+        cameraZ *= 1.4;
+
+        const dir = new THREE.Vector3(1, 1, 1).normalize();
+        const pos = center.clone().addScaledVector(dir, cameraZ);
+        this.camera.position.copy(pos);
+
+        this.camera.near = Math.max(0.01, cameraZ / 100);
+        this.camera.far = cameraZ * 100;
+        this.camera.updateProjectionMatrix();
+
+        this.controls.update();
+    }
+
+    loadSTLModel(url: string) {
+        // 0) Deleting old object
+        if (this.mainObject) {
+            this.scene.remove(this.mainObject);
+            this.mainObject = null;
+        }
+
+        // 0.1) Deleting old annotations
+        this.annotations.forEach((a) => {
+            if (a.label) this.scene.remove(a.label);
+            const obj = this.scene.children.find((o: any) => o.annotationId === a.id);
+            if (obj) this.scene.remove(obj);
+        });
+        this.annotations = [];
+
+        const loader = new STLLoader();
+        loader.load(
+            url,
+            (geometry) => {
+                // Same material
+                const material = new THREE.MeshStandardMaterial({
+                    color: 0x00aaff,
+                    roughness: 0.2,
+                });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+
+                // Fit & center
+                this.fitAndCenterMesh(mesh, /* targetSize */ 1.5);
+
+                this.scene.add(mesh);
+                this.mainObject = mesh;
+
+                // Frame
+                this.frameCameraOnObject(mesh);
+
+                console.log('✅ Custom 3D model loaded & framed');
+            },
+            undefined,
+            (err) => {
+                console.error('❌ STL load error:', err);
+            }
+        );
+    }
+
+    async uploadModel(event: any) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('model', file);
+
+        try {
+            const response = await fetch('https://server-backend-brl7.onrender.com/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const data = await response.json();
+            if (!data.fileUrl) throw new Error('Upload failed');
+
+            //  Load
+            this.loadSTLModel(`https://server-backend-brl7.onrender.com${data.fileUrl}`);
+
+            // Sync with other users
+            this.socket.emit('modelUploaded', {
+                projectId: this.projectId,
+                fileUrl: data.fileUrl,
+            });
+        } catch (err) {
+            console.error('❌ Upload error:', err);
+        }
+    }
+
     // =========================================================================
     // === SOCKET.IO ===
     // =========================================================================
@@ -202,15 +333,30 @@ export class Project implements AfterViewInit, OnDestroy {
             }
 
             // Object
-            if (state.object) {
+            if (state.object && this.mainObject) {
                 const o = state.object;
-                this.cube.position.set(o.position.x, o.position.y, o.position.z);
-                this.cube.rotation.set(o.rotation.x, o.rotation.y, o.rotation.z);
-                this.cube.scale.set(o.scale.x, o.scale.y, o.scale.z);
+                this.mainObject.position.set(o.position.x, o.position.y, o.position.z);
+                this.mainObject.rotation.set(o.rotation.x, o.rotation.y, o.rotation.z);
+                this.mainObject.scale.set(o.scale.x, o.scale.y, o.scale.z);
 
-                // Color
                 if (o.color) {
-                    (this.cube.material as THREE.MeshStandardMaterial).color.set(o.color);
+                    (this.mainObject.material as THREE.MeshStandardMaterial).color.set(o.color);
+                }
+            }
+
+            if (state.model) {
+                const full = `https://server-backend-brl7.onrender.com${state.model}`;
+                this.loadSTLModel(full);
+            } else {
+                // If no model, load the default one
+                if (state.object && this.mainObject) {
+                    const o = state.object;
+                    this.mainObject.position.set(o.position.x, o.position.y, o.position.z);
+                    this.mainObject.rotation.set(o.rotation.x, o.rotation.y, o.rotation.z);
+                    this.mainObject.scale.set(o.scale.x, o.scale.y, o.scale.z);
+                    if (o.color) {
+                        (this.mainObject.material as THREE.MeshStandardMaterial).color.set(o.color);
+                    }
                 }
             }
 
@@ -236,12 +382,14 @@ export class Project implements AfterViewInit, OnDestroy {
 
         // Object update
         this.socket.on('objectUpdated', (data) => {
-            if (data.projectId !== this.projectId) return;
+            if (data.projectId !== this.projectId || !this.mainObject) return;
+
             const o = data;
             if (!o.position || !o.rotation || !o.scale) return;
-            this.cube.position.set(o.position.x, o.position.y, o.position.z);
-            this.cube.rotation.set(o.rotation.x, o.rotation.y, o.rotation.z);
-            this.cube.scale.set(o.scale.x, o.scale.y, o.scale.z);
+
+            this.mainObject.position.set(o.position.x, o.position.y, o.position.z);
+            this.mainObject.rotation.set(o.rotation.x, o.rotation.y, o.rotation.z);
+            this.mainObject.scale.set(o.scale.x, o.scale.y, o.scale.z);
         });
 
         // Camera sync
@@ -271,8 +419,8 @@ export class Project implements AfterViewInit, OnDestroy {
         this.socket.on('cubeColorUpdated', (data) => {
             if (data.projectId !== this.projectId) return;
 
-            if (this.cube) {
-                (this.cube.material as THREE.MeshStandardMaterial).color.set(data.color);
+            if (this.mainObject) {
+                (this.mainObject.material as THREE.MeshStandardMaterial).color.set(data.color);
             }
         });
 
@@ -295,6 +443,12 @@ export class Project implements AfterViewInit, OnDestroy {
             if (data.projectId === this.projectId) {
                 this.removeAnnotation(data.annotationId);
             }
+        });
+
+        // Model upload
+        this.socket.on('modelLoaded', (data) => {
+            if (data.projectId !== this.projectId) return;
+            this.loadSTLModel(`https://server-backend-brl7.onrender.com${data.fileUrl}`);
         });
     }
 
@@ -398,10 +552,9 @@ export class Project implements AfterViewInit, OnDestroy {
         this.isChatOpen = !this.isChatOpen;
     }
 
-    changeCubeColor(color: string) {
-        if (this.cube) {
-            (this.cube.material as THREE.MeshStandardMaterial).color.set(color);
-
+    changeObjectColor(color: string) {
+        if (this.mainObject) {
+            (this.mainObject.material as THREE.MeshStandardMaterial).color.set(color);
             this.socket.emit('updateCubeColor', {
                 projectId: this.projectId,
                 color,
