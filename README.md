@@ -3,7 +3,7 @@
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.5.
 
 ## 🚀 Live Demo
-🔗 [Try the App](https://3d-app-delta.vercel.app/login)
+🔗 [Try the App](https://3d-app-delta.vercel.app/login) You might need to wait a few seconds for backend to start and enjoy!
 
 # 🧱 Real-Time 3D Collaboration App
 
